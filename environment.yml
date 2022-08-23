@@ -1,0 +1,13 @@
+name: el7006
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - pytorch
+prefix: /home/agonzalez/miniconda3/envs/el7006
