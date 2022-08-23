@@ -2,11 +2,11 @@
 # EL 7006 - Clasificación de estrellas periódicas con mecanismos de atención
 
 Por:
-    - Miguel Cuevas
-    - Andrés González
+- Miguel Cuevas
+- Andrés González
 
 Guía:
-    - Bastiam Gamboa
+- Bastiam Gamboa
 
 ---
 
