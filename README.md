@@ -1,4 +1,3 @@
----
 # EL 7006 - Clasificación de estrellas periódicas con mecanismos de atención
 
 Por:
@@ -6,9 +5,8 @@ Por:
 - Andrés González
 
 Guía:
-- Bastiam Gamboa
+- Bastián Gamboa
 
----
 
 ## Referencias:
 - [1] Pimentel, Óscar, et al. Deep Attention-Based Supernovae Classification of Multi-Band
