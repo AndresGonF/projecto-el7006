@@ -3,6 +3,7 @@ import copy
 import torch
 
 from src.models.layer import *
+from src.utils import SaveBestModel
 
 class periodicTransformer:
     def __init__(self, n_classes, N=6, d_model=512, d_ff=2048, h=8, dropout=0.1):
@@ -48,6 +49,7 @@ class periodicTransformer:
         optimizer = self.configure_optimizers()
         loss_history = []
         val_loss_history = []
+        save_best_model = SaveBestModel()
         for epoch in range(n_epochs):
             for idx, batch in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -59,7 +61,8 @@ class periodicTransformer:
             loss_history.append(loss.detach().item())
             val_loss_history.append(val_loss.detach().item())
             print(f'Epoch: {epoch} - Train loss: {loss} - Val loss: {val_loss} - Val acc: {val_acc}')
-        self.model = self.model
+            save_best_model(val_loss, epoch, self.model)
+        self.model = save_best_model.best_model
         return loss_history, val_loss_history
 
     def test(self, test_loader):

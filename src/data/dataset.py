@@ -45,7 +45,7 @@ class lc_dataset(Dataset):
             random_period_list.append(random_period)
         return random_period_list
         
-    def add_curves(self, curve_type, N, seq_len, min_period, max_period, label):
+    def add_curves(self, curve_type, N, seq_len, min_period, max_period, label, folded=False):
         """Añade N curvas de un determinado tipo al dataset.
 
         Parameters
@@ -65,6 +65,10 @@ class lc_dataset(Dataset):
         self.period_list += period_list
         for period in period_list:
             mjd, mag = self.curve_generators[curve_type](period, seq_len=seq_len)
+            if folded:
+                mjd = np.remainder(mjd, period) / period # phi
+                mag = mag[mjd.argsort()] # sorted mag
+                mjd.sort() # sorted phi
             self.mjd_list.append(mjd)
             self.mag_list.append(mag)
             self.labels.append(label)
