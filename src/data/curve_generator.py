@@ -1,5 +1,7 @@
+from random import random
 import numpy as np
 from scipy import signal 
+from src.utils import random_dates
 
 def random_periodic_sin_mix(period, seq_len=100, s_noise=0.2, irregular=True):
     """Genera una curva aleatoria de suma de sinusoides.
@@ -16,7 +18,7 @@ def random_periodic_sin_mix(period, seq_len=100, s_noise=0.2, irregular=True):
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """
-    mjd = np.linspace(0, 4, num=seq_len, dtype=np.float32)
+    mjd = random_dates(N=seq_len)
     if irregular:
         mjd += np.random.randn(seq_len)*0.1
     mjd = np.sort(mjd)
@@ -39,7 +41,7 @@ def random_periodic_square_signal(period, seq_len=100, s_noise=0.2, irregular=Tr
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = np.linspace(0, 4, num=seq_len, dtype=np.float32)
+    mjd = random_dates(N=seq_len)
     if irregular:
         mjd += np.random.randn(seq_len)*0.1
     mjd = np.sort(mjd)
@@ -62,7 +64,7 @@ def random_periodic_sawtooth_signal(period, seq_len=100, s_noise=0.2, irregular=
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = np.linspace(0, 4, num=seq_len, dtype=np.float32)
+    mjd = random_dates(N=seq_len)
     if irregular:
         mjd += np.random.randn(seq_len)*0.1
     mjd = np.sort(mjd)
@@ -86,7 +88,7 @@ def random_gauss_signal(mu=0, sigma=1, seq_len=100, s_noise=0.2, irregular=True)
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = np.linspace(0, 4, num=seq_len, dtype=np.float32)
+    mjd = random_dates(N=seq_len)
     if irregular:
         mjd += np.random.randn(seq_len)*0.1
     mjd = np.sort(mjd)
