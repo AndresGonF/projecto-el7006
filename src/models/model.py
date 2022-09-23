@@ -38,7 +38,7 @@ class periodicTransformer:
         x, y = batch['mag'], batch['label']
         output = self.model(x)
         loss = self.loss_function(output, y)
-        acc = self.evaluate(output, y)
+        _, acc = self.evaluate(output, y)
         return loss, acc
 
     def configure_optimizers(self):
@@ -46,7 +46,8 @@ class periodicTransformer:
 
     def fit(self, train_loader, val_loader, n_epochs):
         optimizer = self.configure_optimizers()
-
+        loss_history = []
+        val_loss_history = []
         for epoch in range(n_epochs):
             for idx, batch in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -55,15 +56,27 @@ class periodicTransformer:
                 optimizer.step()
             for idx, batch in enumerate(val_loader):
                 val_loss, val_acc = self.validation_step(batch, idx)
+            loss_history.append(loss.detach().item())
+            val_loss_history.append(val_loss.detach().item())
             print(f'Epoch: {epoch} - Train loss: {loss} - Val loss: {val_loss} - Val acc: {val_acc}')
         self.model = self.model
+        return loss_history, val_loss_history
 
     def test(self, test_loader):
+        test_avg_acc = []
+        predictions = []
         for idx, batch in enumerate(test_loader):
-            _, test_acc = self.validation_step(batch, idx)
-            print(f'Test acc: {test_acc}')
+            x, y = batch['mag'], batch['label']
+            output = self.model(x)
+            prediction, test_acc = self.evaluate(output, y)
+            test_avg_acc.append(test_acc)
+            predictions += prediction
+            print(f'Test batch acc: {test_acc}')
+        test_avg_acc = sum(test_avg_acc) / len(test_avg_acc)
+        print(f'Test avg acc: {test_avg_acc}')
+        return test_avg_acc, predictions
 
     def evaluate(self, x, y):
         prediction = x.argmax(dim=1)
         accuracy = (prediction == y).sum() / y.shape[0]
-        return accuracy                
+        return list(zip(y.tolist(),prediction.tolist())), accuracy

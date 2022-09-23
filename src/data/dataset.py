@@ -13,7 +13,8 @@ class lc_dataset(Dataset):
         # Generators
         self.curve_generators = {'square': random_periodic_square_signal,
                                 'sawtooth': random_periodic_sawtooth_signal,
-                                'sinmix': random_periodic_sin_mix}
+                                'sinmix': random_periodic_sin_mix,
+                                'gauss':random_gauss_signal}
 
         # Curve data
         self.period_list = []

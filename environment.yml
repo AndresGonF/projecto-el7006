@@ -10,4 +10,5 @@ dependencies:
   - pandas
   - pip
   - pytorch
+  - scipy
 prefix: /home/agonzalez/miniconda3/envs/el7006
