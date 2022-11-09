@@ -15,3 +15,5 @@ Light-Curves. 7 Feb. 2022. arXiv.org, http://arxiv.org/abs/2201.08482.
 Polosukhin, I. (2017). Attention Is All You Need. http://arxiv.org/abs/1706.03762
 - [3] Bahdanau, D., Cho, K., & Bengio, Y. (2014). Neural Machine Translation by Jointly Learning
 to Align and Translate. https://arxiv.org/abs/1409.0473
+- [4] Sousa, R.T., Pereira, L.A. and Soares, A.S. (2020) Improving irregularly sampled time series learning with dense descriptors of Time. https://arxiv.org/abs/2003.09291
+

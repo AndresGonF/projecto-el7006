@@ -83,6 +83,26 @@ class PositionalEncoding(nn.Module):
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
+class PositionalEncodingSousa(nn.Module):
+    "Implement the PE function."
+    def __init__(self, d_TE, maxtime, dropout, max_len=5000):
+        super(PositionalEncodingSousa, self).__init__()
+        self.dropout = nn.Dropout(p=dropout)
+        self.pe = torch.zeros(max_len, d_TE)
+        self.div_term = torch.exp(torch.arange(0, d_TE, 2) *
+                             -(math.log(maxtime) / d_TE))
+        
+    def forward(self, x, time):
+        position = torch.arange(0, time).unsqueeze(1)
+        x = x + Variable(self.pe[:, :x.size(1)], 
+                         requires_grad=False)
+        self.pe[:, 0::2] = torch.sin(position * self.div_term)
+        self.pe[:, 1::2] = torch.cos(position * self.div_term)
+        self.pe = self.pe.unsqueeze(0)
+        self.register_buffer('pe', self.pe)
+        
+        return self.dropout(x)
+
 class TimeFilm(nn.Module):
     def __init__(self, n_harmonics=7, embedding_size=64, T_max=1000.0, input_size = 1):
         super(TimeFilm, self).__init__()
@@ -152,22 +172,3 @@ class TimeFilm(nn.Module):
 #         return self.dropout(x)
 
 
-class PositionalEncodingSousa(nn.Module):
-    "Implement the PE function."
-    def __init__(self, d_TE, maxtime, dropout, max_len=5000):
-        super(PositionalEncodingSousa, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
-        self.pe = torch.zeros(max_len, d_TE)
-        self.div_term = torch.exp(torch.arange(0, d_TE, 2) *
-                             -(math.log(maxtime) / d_TE))
-        
-    def forward(self, x, time):
-        position = torch.arange(0, time).unsqueeze(1)
-        x = x + Variable(self.pe[:, :x.size(1)], 
-                         requires_grad=False)
-        self.pe[:, 0::2] = torch.sin(position * self.div_term)
-        self.pe[:, 1::2] = torch.cos(position * self.div_term)
-        self.pe = self.pe.unsqueeze(0)
-        self.register_buffer('pe', self.pe)
-        
-        return self.dropout(x)
