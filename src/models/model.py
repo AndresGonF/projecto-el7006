@@ -7,6 +7,7 @@ from src.models.layer import *
 from src.utils import clones
 from pytorch_lightning.callbacks import Callback
 import torchmetrics
+import torch.nn.functional as F
 
 class periodicTransformer(pl.LightningModule):
     def __init__(self, n_classes=5, d_model=200, d_ff=128, h=8, N=4, time='discrete'):
@@ -35,9 +36,10 @@ class periodicTransformer(pl.LightningModule):
         else:
             x = self.pos_enc_discrete(x)
         for enc in self.enc_blocks:
-            x = enc(x)
-        x = self.proj(x)
-        return F.log_softmax(x, dim=-1)
+            x = F.relu(enc(x))
+        # x = self.proj(x)
+        # F.log_softmax(x, dim=-1)
+        return self.proj(x)
 
     def loss_function(self, data, label):
         criterion = torch.nn.CrossEntropyLoss()
@@ -87,7 +89,8 @@ class periodicTransformer(pl.LightningModule):
                 'test_f1':test_f1}
 
     def predictions(self, x, y):
-        prediction = x[:,-1].argmax(axis=1)
+        prediction = F.log_softmax(x, dim=-1)
+        prediction = prediction[:,-1].argmax(axis=1)
         return prediction
 
 
