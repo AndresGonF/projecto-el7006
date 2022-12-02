@@ -6,10 +6,11 @@ import torch
 import joblib
 from src.utils import get_project_root
 from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
 
 
 class lc_dataset(Dataset):
-    def __init__(self, seed=42):
+    def __init__(self, seed=42, df=None):
         # Set seed
         self.seed = seed
         np.random.seed(self.seed)
@@ -25,20 +26,31 @@ class lc_dataset(Dataset):
         self.mjd_list = []
         self.mag_list = []
         self.labels = []
+
+        if df is not None:
+            self.period_list = df.period.values
+            self.mjd_list = df.mjd.values
+            self.mag_list = df.mag.values
+            self.labels = df.label.values
+
     
     def clean_macho(self, data, normalize=True, encode_labels=True):
-        labels = np.array([lc.label for lc in data], dtype=object)
-        mask = labels[(labels != 'RRL E') & (labels != 'RRL + GB')]
+        if normalize:
+            norm = lambda x: (x - x.mean()) / x.std()
+            mag = np.array([norm(lc.measurements) for lc in data], dtype=object)
+        else:  
+            mag = np.array([lc.measurements for lc in data], dtype=object)
         
-        mag = np.array([lc.measurements for lc in data], dtype=object)[mask]
+        labels = np.array([lc.label for lc in data], dtype=object)
+        mask = (labels != 'RRL E') & (labels != 'RRL + GB')
+        
         mjd = np.array([lc.times for lc in data], dtype=object)[mask]
+        mag = mag[mask]
+        labels = labels[mask]
 
         labels[(labels == 'RRL AB') | (labels == 'RRL C')] = 'RRL'
         labels[(labels == 'LPV WoodA') | (labels == 'LPV WoodB') | (labels == 'LPV WoodC') | (labels == 'LPV WoodD')] = 'LPV'
         labels[(labels == 'Ceph Fund') | (labels == 'Ceph 1st')] = 'Ceph'
-
-        if normalize:
-            mag = (mag - mag.mean()) / mag.std()
 
         if encode_labels:
             le = preprocessing.LabelEncoder()
@@ -46,17 +58,27 @@ class lc_dataset(Dataset):
 
         return mag, mjd, labels
 
-    def add_dataset(self, dataset_name, normalize=True, folded=False, encode_labels=True):
+    def add_dataset(self, dataset_name, normalize=True, folded=False, encode_labels=True, N=-1):
         full = joblib.load(get_project_root() / 'data' / dataset_name / 'full.pkl')
         if folded:
             for lc in full:
                 lc.period_fold()
         if dataset_name == 'macho':
             mag, mjd, labels = self.clean_macho(full, normalize, encode_labels)
-        self.mag_list += mag
-        self.mjd_list += mjd
-        self.labels += labels
+        if N != -1:
+            idx = np.random.choice(len(mag), N, replace=False)
+            mag = mag[idx]
+            mjd = mjd[idx]
+            labels = labels[idx]
+        self.mag_list += mag.tolist()
+        self.mjd_list += mjd.tolist()
+        self.labels += labels.tolist()
         self.period_list += np.zeros_like(labels).tolist()
+
+    def train_test_split(self, test_size, random_state=42):
+        df = self.to_df()
+        df_train, df_test = train_test_split(df, test_size=test_size, random_state=random_state)
+        return lc_dataset(df = df_train), lc_dataset(df = df_test)
 
 
     def generate_periods(self, N, min_period, max_period):
