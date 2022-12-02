@@ -8,6 +8,52 @@ import math
 
 from src.utils import clones
 
+
+class TransformerEncoder(nn.Module):
+
+    def __init__(self, embedding_size, embedding_sub, num_heads):
+        super(TransformerEncoder, self).__init__()
+        self.mhsa = nn.MultiheadAttention(embedding_size, num_heads)
+        self.norm = clones(LayerNorm(features=embedding_size), 2)
+        self.smlp = nn.Sequential(nn.Linear(in_features=embedding_size, out_features=embedding_sub, bias= False),
+                                  nn.LeakyReLU(0.1),
+                                  nn.Linear(in_features=embedding_sub, out_features=embedding_size, bias= False))
+        
+    def forward(self, x, t= None, p=None, mask=None):
+
+        attn, w = self.mhsa(
+            x, x, x) 
+        attn_ = self.norm[0](attn + x)
+        attn__ = self.smlp(attn_)
+        attn__ = self.norm[1](attn__ + attn_)
+    
+        return attn__, w 
+
+
+class TransformerModel(nn.Module ):
+  def __init__(self, embedding_size, embedding_sub, num_heads, N, TimeEncoder, n_classes):
+          super(TransformerModel, self).__init__()
+
+          self.modulation = TimeEncoder
+          self.encoders = clones(TransformerEncoder(embedding_size= embedding_size, embedding_sub= embedding_sub, num_heads = num_heads), N)
+          self.classifier = nn.Sequential(nn.Linear(in_features=embedding_size, out_features=embedding_size, bias= True),
+                                  nn.LeakyReLU(0.1),
+                                  nn.Linear(in_features=embedding_size, out_features=n_classes, bias= True))
+          self.N   = N
+
+  def forward(self, x, t):
+
+    m = self.modulation(x, t)
+
+    for i in range(self.N):
+
+      m, _ = self.encoders[i](m)
+
+    prob = self.classifier(m)
+    prob = prob[:, -1, :]
+
+    return prob
+
 class EncoderBlock(nn.Module):
     def __init__(self, dropout=0.1, d_model=240, d_ff=128, h=8):
         super(EncoderBlock, self).__init__()

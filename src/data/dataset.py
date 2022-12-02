@@ -3,6 +3,10 @@ import pandas as pd
 from torch.utils.data import Dataset
 from src.data.curve_generator import *
 import torch
+import joblib
+from src.utils import get_project_root
+from sklearn import preprocessing
+
 
 class lc_dataset(Dataset):
     def __init__(self, seed=42):
@@ -21,6 +25,39 @@ class lc_dataset(Dataset):
         self.mjd_list = []
         self.mag_list = []
         self.labels = []
+    
+    def clean_macho(self, data, normalize=True, encode_labels=True):
+        labels = np.array([lc.label for lc in data], dtype=object)
+        mask = labels[(labels != 'RRL E') & (labels != 'RRL + GB')]
+        
+        mag = np.array([lc.measurements for lc in data], dtype=object)[mask]
+        mjd = np.array([lc.times for lc in data], dtype=object)[mask]
+
+        labels[(labels == 'RRL AB') | (labels == 'RRL C')] = 'RRL'
+        labels[(labels == 'LPV WoodA') | (labels == 'LPV WoodB') | (labels == 'LPV WoodC') | (labels == 'LPV WoodD')] = 'LPV'
+        labels[(labels == 'Ceph Fund') | (labels == 'Ceph 1st')] = 'Ceph'
+
+        if normalize:
+            mag = (mag - mag.mean()) / mag.std()
+
+        if encode_labels:
+            le = preprocessing.LabelEncoder()
+            labels = le.fit_transform(labels)
+
+        return mag, mjd, labels
+
+    def add_dataset(self, dataset_name, normalize=True, folded=False, encode_labels=True):
+        full = joblib.load(get_project_root() / 'data' / dataset_name / 'full.pkl')
+        if folded:
+            for lc in full:
+                lc.period_fold()
+        if dataset_name == 'macho':
+            mag, mjd, labels = self.clean_macho(full, normalize, encode_labels)
+        self.mag_list += mag
+        self.mjd_list += mjd
+        self.labels += labels
+        self.period_list += np.zeros_like(labels).tolist()
+
 
     def generate_periods(self, N, min_period, max_period):
         """Genera una lista de períodos random.

@@ -10,16 +10,26 @@ import torchmetrics
 import torch.nn.functional as F
 
 class periodicTransformer(pl.LightningModule):
-    def __init__(self, n_classes=5, d_model=200, d_ff=128, h=8, N=4, time='discrete'):
-        super().__init__()
-        self.time = time
-        self.pos_enc_discrete = PositionalEncoding(d_model)
-        self.pos_enc_continuous = TimeFilm(embedding_size=d_model)
-        self.enc_blocks = clones(EncoderBlock(d_model=d_model, d_ff=d_ff, h=h), N)
-        self.proj = nn.Linear(d_model, n_classes)
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform(p)
+    def __init__(self, embedding_size, embedding_sub, num_heads, N, TimeEncoder, n_classes):
+        super(periodicTransformer, self).__init__()    
+    # def __init__(self, n_classes=5, d_model=200, d_ff=128, h=8, N=4, time='discrete'):
+    #     super().__init__()
+        # self.time = time
+        # self.pos_enc_discrete = PositionalEncoding(d_model)
+        # self.pos_enc_continuous = TimeFilm(embedding_size=d_model)
+        # self.enc_blocks = clones(EncoderBlock(d_model=d_model, d_ff=d_ff, h=h), N)
+        # self.proj = nn.Linear(d_model, n_classes)
+        # for p in self.parameters():
+        #     if p.dim() > 1:
+                # nn.init.xavier_uniform(p)
+
+        self.modulation = TimeEncoder
+        self.encoders = clones(TransformerEncoder(embedding_size= embedding_size, embedding_sub= embedding_sub, num_heads = num_heads), N)
+        self.classifier = nn.Sequential(nn.Linear(in_features=embedding_size, out_features=embedding_size, bias= True),
+                                nn.LeakyReLU(0.1),
+                                nn.Linear(in_features=embedding_size, out_features=n_classes, bias= True))
+        self.N   = N
+
         # Metrics -----------
         self.val_acc = torchmetrics.Accuracy()
         self.test_f1 = torchmetrics.F1Score(number_classes=n_classes, average="micro")
@@ -31,15 +41,27 @@ class periodicTransformer(pl.LightningModule):
         self = self.double()
 
     def forward(self, x, t):
-        if self.time == 'continuous':
-            x = self.pos_enc_continuous(x, t)
-        else:
-            x = self.pos_enc_discrete(x)
-        for enc in self.enc_blocks:
-            x = F.relu(enc(x))
-        # x = self.proj(x)
-        # F.log_softmax(x, dim=-1)
-        return self.proj(x)
+
+        m = self.modulation(x, t)
+
+        for i in range(self.N):
+
+            m, _ = self.encoders[i](m)
+
+            prob = self.classifier(m)
+            prob = prob[:, -1, :]
+        return prob
+
+    # def forward(self, x, t):
+    #     if self.time == 'continuous':
+    #         x = self.pos_enc_continuous(x, t)
+    #     else:
+    #         x = self.pos_enc_discrete(x)
+    #     for enc in self.enc_blocks:
+    #         x = enc(x)
+    #     # x = self.proj(x)
+    #     # F.log_softmax(x, dim=-1)
+    #     return self.proj(x)
 
     def loss_function(self, data, label):
         criterion = torch.nn.CrossEntropyLoss()
@@ -48,14 +70,14 @@ class periodicTransformer(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, t, y = batch['mag'], batch['mjd'], batch['label']
         output = self(x.unsqueeze(dim=2), t.unsqueeze(dim=2))
-        loss = self.loss_function(output[:,-1], y)
+        loss = self.loss_function(output, y)
         self.log('loss',loss)
         return {'loss':loss}
 
     def validation_step(self, batch, batch_idx):
         x, t, y = batch['mag'], batch['mjd'], batch['label']
         output = self(x.unsqueeze(dim=2), t.unsqueeze(dim=2))
-        val_loss = self.loss_function(output[:,-1], y)
+        val_loss = self.loss_function(output, y)
         val_preds = self.predictions(output, y)
         val_acc = self.val_acc(val_preds, y)
         self.log('val_loss', val_loss)
@@ -71,7 +93,7 @@ class periodicTransformer(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, t, y = batch['mag'], batch['mjd'], batch['label']
         output = self(x.unsqueeze(dim=2), t.unsqueeze(dim=2))
-        test_loss = self.loss_function(output[:,-1], y)
+        test_loss = self.loss_function(output, y)
         test_preds = self.predictions(output, y)
         test_acc = self.test_acc(test_preds, y)
         test_f1 = self.test_f1(test_preds, y)
@@ -90,7 +112,7 @@ class periodicTransformer(pl.LightningModule):
 
     def predictions(self, x, y):
         prediction = F.log_softmax(x, dim=-1)
-        prediction = prediction[:,-1].argmax(axis=1)
+        prediction = prediction.argmax(axis=1)
         return prediction
 
 

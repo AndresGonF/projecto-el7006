@@ -18,9 +18,9 @@ def random_periodic_sin_mix(period, seq_len=100, s_noise=0.2, irregular=True):
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """
-    mjd = random_dates(N=seq_len, irregular=irregular)
+    mjd = random_dates(start='2018-01-01',N=seq_len, irregular=irregular)
     mjd = np.sort(mjd)
-    mjd = (mjd - mjd.mean()) / mjd.std()    
+    # mjd = (mjd - mjd.mean()) / mjd.std()
     mag = np.sin(2.0*np.pi*mjd/period) + 0.5*np.sin(2.0*np.pi*2*mjd/period)  + 0.25*np.sin(2.0*np.pi*3*mjd/period)
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
@@ -40,9 +40,9 @@ def random_periodic_square_signal(period, seq_len=100, s_noise=0.2, irregular=Tr
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = random_dates(N=seq_len, irregular=irregular)
+    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
     mjd = np.sort(mjd)
-    mjd = (mjd - mjd.mean()) / mjd.std()    
+    # mjd = (mjd - mjd.mean()) / mjd.std()    
     mag = signal.square(2 * np.pi * mjd/period) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
@@ -62,9 +62,9 @@ def random_periodic_sawtooth_signal(period, seq_len=100, s_noise=0.2, irregular=
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = random_dates(N=seq_len, irregular=irregular)
+    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
     mjd = np.sort(mjd)
-    mjd = (mjd - mjd.mean()) / mjd.std()    
+    # mjd = (mjd - mjd.mean()) / mjd.std()    
     mag = signal.sawtooth(2 * np.pi * mjd/period) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
@@ -85,9 +85,9 @@ def random_gauss_signal(mu=0, sigma=1, seq_len=100, s_noise=0.2, irregular=True)
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = random_dates(N=seq_len, irregular=irregular)
+    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
     mjd = np.sort(mjd)
-    mjd = (mjd - mjd.mean()) / mjd.std()    
+    # mjd = (mjd - mjd.mean()) / mjd.std()    
     mag = np.random.normal(loc=mu, scale=sigma, size=seq_len) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag    
