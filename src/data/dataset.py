@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from src.data.curve_generator import *
 import torch
 import joblib
-from src.utils import get_project_root
+from src.utils import get_project_root, fix_seq_length
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
@@ -58,7 +58,7 @@ class lc_dataset(Dataset):
 
         return mag, mjd, labels
 
-    def add_dataset(self, dataset_name, normalize=True, folded=False, encode_labels=True, N=-1):
+    def add_dataset(self, dataset_name, seq_len, normalize=True, folded=False, encode_labels=True, N=-1):
         full = joblib.load(get_project_root() / 'data' / dataset_name / 'full.pkl')
         if folded:
             for lc in full:
@@ -70,6 +70,7 @@ class lc_dataset(Dataset):
             mag = mag[idx]
             mjd = mjd[idx]
             labels = labels[idx]
+        mag, mjd = fix_seq_length(mag, mjd, seq_len)
         self.mag_list += mag.tolist()
         self.mjd_list += mjd.tolist()
         self.labels += labels.tolist()
