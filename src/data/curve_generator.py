@@ -3,7 +3,7 @@ import numpy as np
 from scipy import signal 
 from src.utils import random_dates
 
-def random_periodic_sin_mix(period, seq_len=100, s_noise=0.2, irregular=True):
+def random_periodic_sin_mix(period, max_time=1000, dates='hmjd', seq_len=100, s_noise=0.2, irregular=True):
     """Genera una curva aleatoria de suma de sinusoides.
 
     Parameters
@@ -18,14 +18,18 @@ def random_periodic_sin_mix(period, seq_len=100, s_noise=0.2, irregular=True):
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """
-    mjd = random_dates(start='2018-01-01',N=seq_len, irregular=irregular)
-    mjd = np.sort(mjd)
-    # mjd = (mjd - mjd.mean()) / mjd.std()
+    if dates == 'hmjd':
+        mjd = random_dates(N=seq_len, irregular=irregular)
+    elif dates == 'linspace':
+        mjd = np.linspace(0, max_time, num=seq_len)
+        if irregular:
+            mjd += np.random.randn(seq_len)*0.01
+        mjd = np.sort(mjd)
     mag = np.sin(2.0*np.pi*mjd/period) + 0.5*np.sin(2.0*np.pi*2*mjd/period)  + 0.25*np.sin(2.0*np.pi*3*mjd/period)
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
 
-def random_periodic_square_signal(period, seq_len=100, s_noise=0.2, irregular=True):
+def random_periodic_square_signal(period, max_time=1000, dates='hmjd', seq_len=100, s_noise=0.2, irregular=True):
     """Genera una curva aleatoria de señales cuadradas.
 
     Parameters
@@ -39,15 +43,19 @@ def random_periodic_square_signal(period, seq_len=100, s_noise=0.2, irregular=Tr
     -------
     tuple
         tuple con los tiempos y magnitudes de la curva.            
-    """    
-    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
-    mjd = np.sort(mjd)
-    # mjd = (mjd - mjd.mean()) / mjd.std()    
+    """
+    if dates == 'hmjd':
+        mjd = random_dates(N=seq_len, irregular=irregular)
+    elif dates == 'linspace':
+        mjd = np.linspace(0, max_time, num=seq_len)
+        if irregular:
+            mjd += np.random.randn(seq_len)*0.01
+        mjd = np.sort(mjd)
     mag = signal.square(2 * np.pi * mjd/period) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
 
-def random_periodic_sawtooth_signal(period, seq_len=100, s_noise=0.2, irregular=True):
+def random_periodic_sawtooth_signal(period, max_time=1000, dates='hmjd', seq_len=100, s_noise=0.2, irregular=True):
     """Genera una curva aleatoria de diente de sierra.
 
     Parameters
@@ -62,15 +70,19 @@ def random_periodic_sawtooth_signal(period, seq_len=100, s_noise=0.2, irregular=
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
-    mjd = np.sort(mjd)
-    # mjd = (mjd - mjd.mean()) / mjd.std()    
+    if dates == 'hmjd':
+        mjd = random_dates(N=seq_len, irregular=irregular)
+    elif dates == 'linspace':
+        mjd = np.linspace(0, max_time, num=seq_len)
+        if irregular:
+            mjd += np.random.randn(seq_len)*0.01
+        mjd = np.sort(mjd)
     mag = signal.sawtooth(2 * np.pi * mjd/period) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag
 
 
-def random_gauss_signal(mu=0, sigma=1, seq_len=100, s_noise=0.2, irregular=True):
+def random_gauss_signal(mu=0, sigma=1, max_time=1000, dates='hmjd', seq_len=100, s_noise=0.2, irregular=True):
     """Genera una curva aleatoria de diente de sierra.
 
     Parameters
@@ -85,9 +97,13 @@ def random_gauss_signal(mu=0, sigma=1, seq_len=100, s_noise=0.2, irregular=True)
     tuple
         tuple con los tiempos y magnitudes de la curva.            
     """    
-    mjd = random_dates(start='2018-01-01', N=seq_len, irregular=irregular)
-    mjd = np.sort(mjd)
-    # mjd = (mjd - mjd.mean()) / mjd.std()    
+    if dates == 'hmjd':
+        mjd = random_dates(N=seq_len, irregular=irregular)
+    elif dates == 'linspace':
+        mjd = np.linspace(0, max_time, num=seq_len)
+        if irregular:
+            mjd += np.random.randn(seq_len)*0.01
+        mjd = np.sort(mjd)
     mag = np.random.normal(loc=mu, scale=sigma, size=seq_len) 
     mag += np.random.randn(seq_len)*s_noise
     return mjd, mag    

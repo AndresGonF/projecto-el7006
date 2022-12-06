@@ -55,6 +55,7 @@ class lc_dataset(Dataset):
         if encode_labels:
             le = preprocessing.LabelEncoder()
             labels = le.fit_transform(labels)
+            self.classes = le.classes_
 
         return mag, mjd, labels
 
@@ -105,7 +106,7 @@ class lc_dataset(Dataset):
             random_period_list.append(random_period)
         return random_period_list
         
-    def add_curves(self, curve_type, N, seq_len, min_period, max_period, label, irregular=True, folded=False, normalize=True):
+    def add_curves(self, curve_type, N, seq_len, min_period, max_period, label, max_time=1000, dates='hmjd', irregular=True, folded=False, normalize=True):
         """Añade N curvas de un determinado tipo al dataset.
 
         Parameters
@@ -124,7 +125,7 @@ class lc_dataset(Dataset):
         period_list = self.generate_periods(N, min_period, max_period)
         self.period_list += period_list
         for period in period_list:
-            mjd, mag = self.curve_generators[curve_type](period, seq_len=seq_len, irregular=irregular)
+            mjd, mag = self.curve_generators[curve_type](period, seq_len=seq_len, max_time=max_time, dates=dates, irregular=irregular)
             if folded:
                 mjd = np.remainder(mjd, period) / period # phi
                 mag = mag[mjd.argsort()] # sorted mag
